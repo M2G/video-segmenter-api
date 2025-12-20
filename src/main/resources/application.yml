@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/video_jobs_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+video:
+  watch-dir: ./tmp/videos
+  processing-dir: ./tmp/videos/processing
+  done-dir: ./tmp/videos/done
+  error-dir: ./tmp/videos/error
+  hls-dir: ./var/www/html/streams
+
+  segmenter-bin: ./usr/local/bin/video_segmenter
+  segment-duration: 10
+  max-segments: 0

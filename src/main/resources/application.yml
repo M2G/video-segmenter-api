@@ -1,4 +1,9 @@
 spring:
+  devtools:
+    restart:
+      enabled: true
+      poll-interval: 1000
+      quiet-period: 400
   datasource:
     url: jdbc:postgresql://127.0.0.1:5432/video_jobs_db
     username: postgres
@@ -18,6 +23,5 @@ video:
   error-dir: ./tmp/videos/error
   hls-dir: ./var/www/html/streams
 
-  segmenter-bin: ./usr/local/bin/video_segmenter
   segment-duration: 10
   max-segments: 0

@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class VideoOrchestratorApplication {
 
     public static void main(String[] args) {
+        System.out.println(">>> OrchestratorRunner M2G");
         SpringApplication.run(VideoOrchestratorApplication.class, args);
     }
 

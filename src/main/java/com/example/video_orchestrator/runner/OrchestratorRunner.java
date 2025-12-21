@@ -3,66 +3,88 @@ package com.example.video_orchestrator.runner;
 import com.example.video_orchestrator.model.VideoJob;
 import com.example.video_orchestrator.model.VideoJobStatus;
 import com.example.video_orchestrator.repository.VideoJobRepository;
+import com.example.video_orchestrator.services.FileWorkflowService;
 import com.example.video_orchestrator.services.OrchestratorService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 
 @Component
-public class OrchestratorRunner implements CommandLineRunner
-{
+public class OrchestratorRunner implements CommandLineRunner {
+
     @Value("${video.watch-dir}")
     private Path watchDir;
 
     @Value("${video.processing-dir}")
     private Path processingDir;
 
-    @Autowired
-    private VideoJobRepository repo;
+    @Value("${video.done-dir}")
+    private Path doneDir;
 
-    @Autowired
-    private OrchestratorService orchestrator;
+    @Value("${video.error-dir}")
+    private Path errorDir;
+
+    private final VideoJobRepository jobRepository;
+    private final FileWorkflowService fileService;
+    private final OrchestratorService orchestratorService;
+
+    public OrchestratorRunner(VideoJobRepository jobRepository,
+                              FileWorkflowService fileService,
+                              OrchestratorService orchestratorService) {
+        this.jobRepository = jobRepository;
+        this.fileService = fileService;
+        this.orchestratorService = orchestratorService;
+    }
 
     @Override
-    public void run(String... args) throws Exception {
-        Files.list(watchDir)
-                .filter(p -> p.toString().endsWith(".mp4"))
-                .forEach(this::submitJob);
-    }
-
-    private void submitJob(Path file) {
-        String name = file.getFileName().toString();
-
-        VideoJob job = repo.findByFilename(name)
-                .orElseGet(() -> repo.save(newJob(name)));
-
-        if (job.getStatus() != VideoJobStatus.PENDING) return;
-
+    public void run(String... args) {
+        System.out.println(">>> OrchestratorRunner STARTED");
+        System.out.println("watchDir = " + watchDir.toAbsolutePath());
+        System.out.println("processingDir = " + processingDir.toAbsolutePath());
         try {
-            Path processingFile = Files.move(
-                    file,
-                    processingDir.resolve(name),
-                    StandardCopyOption.ATOMIC_MOVE
-            );
+            Files.createDirectories(processingDir);
+            Files.createDirectories(doneDir);
+            Files.createDirectories(errorDir);
 
-            orchestrator.process(job, processingFile);
+            Files.list(watchDir)
+                    .filter(Files::isRegularFile)
+                    .forEach(file -> {
+                        try {
+                            VideoJob job = jobRepository
+                                    .findByFilename(file.getFileName().toString())
+                                    .orElseGet(() -> {
+                                        VideoJob j = new VideoJob();
+                                        j.setFilename(file.getFileName().toString());
+                                        j.setStatus(VideoJobStatus.PENDING);
+                                        j.setRetryCount(0);
+                                        j.setCreatedAt(LocalDateTime.now());
+                                        return jobRepository.save(j);
+                                    });
 
-        } catch (IOException ignored) {}
-    }
+                            if (job.getStatus() == VideoJobStatus.PENDING ||
+                                    job.getStatus() == VideoJobStatus.ERROR) {
 
-    private VideoJob newJob(String name) {
-        VideoJob j = new VideoJob();
-        j.setFilename(name);
-        j.setStatus(VideoJobStatus.PENDING);
-        j.setRetryCount(0);
-        j.setCreatedAt(LocalDateTime.now());
-        return j;
+                                Path processingFile =
+                                        fileService.moveToProcessing(file, processingDir);
+
+                                orchestratorService.markProcessing(job);
+
+                                // 👉 ici, un autre système segmente la vidéo
+
+                                fileService.moveToDone(processingFile, doneDir);
+                                orchestratorService.markDone(job);
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

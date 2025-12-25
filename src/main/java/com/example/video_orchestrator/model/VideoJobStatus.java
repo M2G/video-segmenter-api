@@ -4,5 +4,6 @@ public enum VideoJobStatus {
     PENDING,
     PROCESSING,
     DONE,
-    ERROR
+    ERROR,
+    FAILED
 }

@@ -1,22 +1,22 @@
 package com.example.video_orchestrator.config;
 
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.Executor;
+
 @Configuration
-@EnableAsync
 public class ExecutorConfig {
 
-    @Bean
-    public TaskExecutor videoExecutor() {
+    @Bean(name = "jobExecutor")
+    public TaskExecutor jobExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(10);
-        executor.setThreadNamePrefix("video-worker-");
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("job-sync-");
         executor.initialize();
         return executor;
     }

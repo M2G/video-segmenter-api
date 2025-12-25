@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "video_jobs")
 public class VideoJob {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -15,10 +14,8 @@ public class VideoJob {
     private String filename;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private VideoJobStatus status;
 
-    @Column(nullable = false)
     private int retryCount;
 
     private LocalDateTime createdAt;

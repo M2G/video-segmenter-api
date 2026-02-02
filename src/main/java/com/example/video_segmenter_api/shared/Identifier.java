@@ -1,4 +1,4 @@
-package com.example.demo.shared.domain;
+package com.example.video_segmenter_api.shared;
 
 import java.util.UUID;
 

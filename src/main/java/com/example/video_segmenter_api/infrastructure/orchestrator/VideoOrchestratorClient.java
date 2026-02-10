@@ -4,12 +4,35 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+import java.util.UUID;
+
 @Component
 public class VideoOrchestratorClient {
 
-    public void send(UUID videoId, String filePath) {
-        // HTTP call vers video_orchestrator
-        // volontairement vide pour l’exemple
-    }
-}
+    private final RestClient restClient;
 
+    public VideoOrchestratorClient(
+            @Value("${video-orchestrator.base-url}") String baseUrl
+    ) {
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .build();
+    }
+
+    public void send(UUID videoId, String filePath) {
+        restClient.post()
+                .uri("/videos")
+                .body(new OrchestratorRequest(
+                        videoId.toString(),
+                        filePath
+                ))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    record OrchestratorRequest(String videoId, String filePath) {}
+}

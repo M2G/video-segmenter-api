@@ -21,6 +21,52 @@ public class Queries {
         this.conn = conn;
     }
 
+    private static @Nullable Integer getInt(@NonNull ResultSet rs, int col) throws SQLException {
+        var colVal = rs.getInt(col); return rs.wasNull() ? null : colVal;
+    }
+    private static @Nullable Double getDouble(@NonNull ResultSet rs, int col) throws SQLException {
+        var colVal = rs.getDouble(col); return rs.wasNull() ? null : colVal;
+    }
+
+    private static final String findVideoById = """
+        -- name: FindVideoById :one
+        SELECT id, file_path, status, duration, segments_count
+        FROM videos
+        WHERE id = ?
+        """;
+
+    public record FindVideoByIdRow(
+        @NonNull String id,
+        @NonNull String filePath,
+        @NonNull String status,
+        @Nullable Double duration,
+        @Nullable Integer segmentsCount
+    ) {}
+
+    public Optional<FindVideoByIdRow> findVideoById(
+        @NonNull String id
+    ) throws SQLException {
+        var stmt = conn.prepareStatement(findVideoById);
+        stmt.setString(1, id);
+
+        var results = stmt.executeQuery();
+        if (!results.next()) {
+            return Optional.empty();
+        }
+
+        var ret = new FindVideoByIdRow(
+            results.getString(1),
+            results.getString(2),
+            results.getString(3),
+            getDouble(results, 4),
+            getInt(results, 5)
+        );
+        if (results.next()) {
+            throw new SQLException("expected one row in result set, but got many");
+        }
+
+        return Optional.of(ret);
+    }
 
     private static final String getVideoById = """
         -- name: GetVideoById :one
@@ -73,6 +119,43 @@ public class Queries {
         stmt.setString(1, id);
         stmt.setString(2, filePath);
         stmt.setString(3, status);
+
+        stmt.execute();
+    }
+
+    private static final String updateVideoMetadata = """
+        -- name: UpdateVideoMetadata :exec
+        UPDATE videos
+        SET
+            duration = ?,
+            segments_count = ?,
+            status = ?
+        WHERE id = ?
+        """;
+
+    public void updateVideoMetadata(
+        @NonNull String id,
+        @Nullable Double duration,
+        @Nullable Integer segmentsCount,
+        @NonNull String status
+    ) throws SQLException {
+        var stmt = conn.prepareStatement(updateVideoMetadata);
+        stmt.setString(1, id);
+        
+		if (duration != null) {
+		    stmt.setDouble(2, duration);
+		} else {
+		    stmt.setNull(2, java.sql.Types.DOUBLE);
+		}
+		
+        
+		if (segmentsCount != null) {
+		    stmt.setInt(3, segmentsCount);
+		} else {
+		    stmt.setNull(3, java.sql.Types.INTEGER);
+		}
+		
+        stmt.setString(4, status);
 
         stmt.execute();
     }

@@ -4,6 +4,8 @@ import com.example.video_segmenter_api.repository.VideoRepository;
 import com.example.video_segmenter_api.domain.VideoUpload;
 import com.example.video_segmenter_api.infrastructure.orchestrator.VideoOrchestratorClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class UploadVideoUseCase {
@@ -20,14 +22,29 @@ public class UploadVideoUseCase {
     }
 
     public void execute(String filePath) {
+
+        // 1️⃣ Création + persistence
         VideoUpload video = VideoUpload.create(filePath);
         video.markAsUploaded();
 
-        repository.save(video);
+        save(video);
 
+        // 2️⃣ Appel externe (hors transaction)
         orchestrator.send(video.getId(), video.getFilePath());
 
+        // 3️⃣ Update status
         video.markAsSent();
+        updateStatus(video);
+    }
+
+    @Transactional
+    protected void save(VideoUpload video) {
+        repository.save(video);
+    }
+
+    @Transactional
+    protected void updateStatus(VideoUpload video) {
         repository.updateStatus(video.getId(), video.getStatus());
     }
 }
+

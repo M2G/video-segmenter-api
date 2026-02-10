@@ -1,0 +1,27 @@
+video-orchestrator:
+  base-url: http://video-orchestrator:8080
+
+  spring:
+    devtools:
+      restart:
+        enabled: true
+        poll-interval: 1000
+        quiet-period: 400
+    datasource:
+      url: jdbc:postgresql://127.0.0.1:5432/video_jobs_db
+      username: postgres
+      password: postgres
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 2000
+    mvc:
+      pathmatch:
+        matching-strategy: ant_path_matcher
+
+    jpa:
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
+      hibernate:
+        ddl-auto: update
+      show-sql: false

@@ -1,9 +1,9 @@
-package com.example.demo.application;
+package com.example.video_segmenter_api.application;
 
-import com.example.video.domain.VideoRepository;
-import com.example.video.domain.VideoStatus;
-import com.example.video.domain.VideoUpload;
-import com.example.video.infrastructure.orchestrator.VideoOrchestratorClient;
+import com.example.video_segmenter_api.repository.VideoRepository;
+import com.example.video_segmenter_api.domain.VideoStatus;
+import com.example.video_segmenter_api.domain.VideoUpload;
+import com.example.video_segmenter_api.infrastructure.orchestrator.VideoOrchestratorClient;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -43,7 +43,12 @@ class UploadVideoUseCaseTest {
     }
 
     static class FakeOrchestrator extends VideoOrchestratorClient {
+        private static final String baseUrl = "";
         boolean called = false;
+
+        public FakeOrchestrator() {
+            super(baseUrl);
+        }
 
         @Override
         public void send(UUID videoId, String filePath) {

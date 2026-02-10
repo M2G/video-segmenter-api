@@ -8,6 +8,9 @@ public class VideoUpload {
     private final String filePath;
     private VideoStatus status;
 
+    private Double duration;
+    private Integer segmentsCount;
+
     private VideoUpload(UUID id, String filePath) {
         this.id = id;
         this.filePath = filePath;
@@ -26,6 +29,12 @@ public class VideoUpload {
         this.status = VideoStatus.SENT;
     }
 
+    public void markAsProcessed(double duration, int segmentsCount) {
+        this.duration = duration;
+        this.segmentsCount = segmentsCount;
+        this.status = VideoStatus.PROCESSED;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -37,4 +46,13 @@ public class VideoUpload {
     public VideoStatus getStatus() {
         return status;
     }
+
+    public Double getDuration() {
+        return duration;
+    }
+
+    public Integer getSegmentsCount() {
+        return segmentsCount;
+    }
 }
+

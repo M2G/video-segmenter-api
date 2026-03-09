@@ -46,16 +46,30 @@ public class SqlcVideoRepository implements VideoRepository {
 
     @Override
     public Optional<VideoUpload> findById(UUID id) {
+
         try {
-            var record = queries.findVideoById(id.toString());
+
+            var recordOpt = queries.findVideoById(id.toString());
+
+            if (recordOpt.isEmpty()) {
+                return Optional.empty();
+            }
+
+            var record = recordOpt.get();
+
             VideoUpload video = VideoUpload.create(record.filePath());
-            video.markAsProcessed(
-                    record.duration() == null ? 0 : record.duration(),
-                    record.segmentsCount() == null ? 0 : record.segmentsCount()
-            );
+
+            if (record.duration() != null && record.segmentsCount() != null) {
+                video.markAsProcessed(
+                        record.duration(),
+                        record.segmentsCount()
+                );
+            }
+
             return Optional.of(video);
+
         } catch (SQLException e) {
-            return Optional.empty();
+            throw new RuntimeException(e);
         }
     }
 
